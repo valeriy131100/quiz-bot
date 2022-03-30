@@ -1,9 +1,6 @@
 import os
 import re
 
-from environs import Env
-
-
 def load_quizzes_from_directory(directory, encoding):
     quizzes = dict()
 
@@ -25,14 +22,3 @@ def load_quizzes_from_directory(directory, encoding):
                     quizzes[last_question] = answer
 
     return quizzes
-
-
-if __name__ == '__main__':
-    env = Env()
-    env.read_env()
-
-    quizzes_directory = env.str('QUIZ_DIRECTORY', 'quizzes')
-    quizzes_encoding = env.str('QUIZ_ENCODING', 'koi8_r')
-
-    quizzes = load_quizzes_from_directory(quizzes_directory, quizzes_encoding)
-    print(quizzes)
