@@ -16,6 +16,7 @@ from file_workers import load_quizzes_from_directory
 
 class QuizStates(Enum):
     START = 0
+    AWAIT_ANSWER = 1
 
 
 DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
@@ -32,8 +33,7 @@ DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
 
 
 def start(update: Update, context: CallbackContext):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
+    update.message.reply_text(
         text='Привет! Я бот для викторин!',
         reply_markup=DEFAULT_KEYBOARD,
     )
@@ -49,10 +49,29 @@ def handle_new_question(update: Update, context: CallbackContext):
 
     context.bot_data['redis'].set(chat_id, question)
 
-    context.bot.send_message(
-        chat_id=chat_id,
+    update.message.reply_text(
         text=question
     )
+
+    return QuizStates.AWAIT_ANSWER
+
+
+def handle_answer(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
+    question = context.bot_data['redis'].get(chat_id).decode('utf-8')
+    answer = context.bot_data['questions'].get(question)
+
+    cleared_answer = answer[:answer.find('.')]
+
+    if cleared_answer.lower() in update.message.text.lower():
+        update.message.reply_text(
+            text='Правильно! Поздравляю! '
+                 'Для следующего вопроса нажми «Новый вопрос»'
+        )
+        return QuizStates.START
+
+    update.message.reply_text(text='Неправильно… Попробуешь ещё раз?')
+    return QuizStates.AWAIT_ANSWER
 
 
 if __name__ == '__main__':
@@ -78,6 +97,10 @@ if __name__ == '__main__':
                QuizStates.START: [MessageHandler(
                    Filters.regex(r'^Новый вопрос$'),
                    handle_new_question
+               )],
+               QuizStates.AWAIT_ANSWER: [MessageHandler(
+                   Filters.text & ~Filters.command,
+                   handle_answer
                )]
             },
             fallbacks=[CommandHandler('start', start)]
