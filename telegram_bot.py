@@ -74,6 +74,18 @@ def handle_answer(update: Update, context: CallbackContext):
     return QuizStates.AWAIT_ANSWER
 
 
+def handle_surrender(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
+    question = context.bot_data['redis'].get(chat_id).decode('utf-8')
+    answer = context.bot_data['questions'].get(question)
+
+    update.message.reply_text(
+        text=f'Правильный ответ - "{answer}"'
+    )
+
+    return handle_new_question(update, context)
+
+
 if __name__ == '__main__':
     updater = Updater(config.telegram_token)
 
@@ -94,14 +106,22 @@ if __name__ == '__main__':
         ConversationHandler(
             entry_points=[CommandHandler('start', start)],
             states={
-               QuizStates.START: [MessageHandler(
-                   Filters.regex(r'^Новый вопрос$'),
-                   handle_new_question
-               )],
-               QuizStates.AWAIT_ANSWER: [MessageHandler(
-                   Filters.text & ~Filters.command,
-                   handle_answer
-               )]
+               QuizStates.START: [
+                   MessageHandler(
+                       Filters.regex(r'^Новый вопрос$'),
+                       handle_new_question
+                   )
+               ],
+               QuizStates.AWAIT_ANSWER: [
+                   MessageHandler(
+                       Filters.regex(r'^Сдаться$'),
+                       handle_surrender
+                   ),
+                   MessageHandler(
+                       Filters.text & ~Filters.command,
+                       handle_answer
+                   )
+               ]
             },
             fallbacks=[CommandHandler('start', start)]
         )
