@@ -1,6 +1,7 @@
 import os
 import re
 
+
 def load_quizzes_from_directory(directory, encoding):
     quizzes = dict()
 
