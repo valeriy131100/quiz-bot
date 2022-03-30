@@ -1,6 +1,7 @@
 import random
 from enum import Enum
 
+import redis
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (Updater,
                           CallbackContext,
@@ -43,9 +44,14 @@ def start(update: Update, context: CallbackContext):
 def handle_new_question(update: Update, context: CallbackContext):
     questions = context.bot_data['questions']
 
+    question = random.choice(list(questions.keys()))
+    chat_id = update.effective_chat.id
+
+    context.bot_data['redis'].set(chat_id, question)
+
     context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=random.choice(list(questions.keys()))
+        chat_id=chat_id,
+        text=question
     )
 
 
@@ -57,6 +63,12 @@ if __name__ == '__main__':
     dispatcher.bot_data['questions'] = load_quizzes_from_directory(
         config.quizzes_directory,
         config.quizzes_encoding
+    )
+
+    dispatcher.bot_data['redis'] = redis.Redis(
+        host=config.redis_host,
+        port=config.redis_port,
+        password=config.redis_password
     )
 
     dispatcher.add_handler(
