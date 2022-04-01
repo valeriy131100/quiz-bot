@@ -62,6 +62,8 @@ def handle_surrender(event, context):
         random_id=get_random_id()
     )
 
+    handle_new_question(event, context)
+
 
 def handle_answer(event, context):
     from_id = event.message.from_id
