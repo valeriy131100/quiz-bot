@@ -11,3 +11,6 @@ telegram_token = env.str('TELEGRAM_TOKEN')
 redis_host = env.str('REDIS_HOST', 'localhost')
 redis_port = env.int('REDIS_PORT', 6379)
 redis_password = env.str('REDIS_PASSWORD', None)
+
+vk_token = env.str('VK_TOKEN')
+vk_group_id = env.str('VK_GROUP_ID')
