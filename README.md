@@ -2,7 +2,7 @@
 
 [Telegram](https://telegram.org) и [Vk](https://vk.com)-боты для проведения викторин.
 
-[Пример vk-бота](https://vk.me/public212344075). [Пример telegram-бота](https://t.me/@AnotherMuseumQuizBot).
+[Пример vk-бота](https://vk.me/public212344075). [Пример telegram-бота](https://t.me/AnotherMuseumQuizBot).
 
 ## Установка
 Вам понадобится установленный Python 3.6+ и git.
