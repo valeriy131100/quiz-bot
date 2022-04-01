@@ -1,3 +1,4 @@
+import random
 from dataclasses import dataclass, field
 
 import vk_api as vk
@@ -8,13 +9,14 @@ from vk_api.utils import get_random_id
 from vk_api.vk_api import VkApiMethod
 
 import config
+from file_workers import load_quizzes_from_directory
 
 
 @dataclass
 class Context:
     vk_api: VkApiMethod
     redis: Redis
-    current_questions: dict = field(default_factory=dict)
+    questions: dict = field(default_factory=dict)
 
 
 def start(event, context):
@@ -33,15 +35,58 @@ def start(event, context):
 
 
 def handle_new_question(event, context):
-    pass
+    from_id = event.message.from_id
+    question = random.choice(list(context.questions.keys()))
+
+    context.redis.set(f'vk-{from_id}', question)
+
+    context.vk_api.messages.send(
+        user_id=event.message.from_id,
+        message=question,
+        random_id=get_random_id()
+    )
 
 
 def handle_surrender(event, context):
-    pass
+    from_id = event.message.from_id
+    question = context.redis.get(f'vk-{from_id}').decode('utf-8')
+
+    if not question:
+        return
+
+    answer = context.questions.get(question)
+
+    context.vk_api.messages.send(
+        user_id=event.message.from_id,
+        message=answer,
+        random_id=get_random_id()
+    )
 
 
 def handle_answer(event, context):
-    pass
+    from_id = event.message.from_id
+    question = context.redis.get(f'vk-{from_id}').decode('utf-8')
+
+    if not question:
+        return
+
+    answer = context.questions.get(question)
+
+    cleared_answer = answer[:answer.find('.')]
+
+    if cleared_answer.lower() in event.message.text.lower():
+        context.vk_api.messages.send(
+            user_id=event.message.from_id,
+            message='Правильно! Поздравляю! '
+                    'Для следующего вопроса нажми «Новый вопрос»',
+            random_id=get_random_id()
+        )
+    else:
+        context.vk_api.messages.send(
+            user_id=event.message.from_id,
+            message='Неправильно… Попробуешь ещё раз?',
+            random_id=get_random_id()
+        )
 
 
 if __name__ == "__main__":
@@ -54,6 +99,10 @@ if __name__ == "__main__":
             host=config.redis_host,
             port=config.redis_port,
             password=config.redis_password
+        ),
+        questions=load_quizzes_from_directory(
+            config.quizzes_directory,
+            config.quizzes_encoding
         )
     )
 

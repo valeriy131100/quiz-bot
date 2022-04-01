@@ -47,7 +47,7 @@ def handle_new_question(update: Update, context: CallbackContext):
     question = random.choice(list(questions.keys()))
     chat_id = update.effective_chat.id
 
-    context.bot_data['redis'].set(chat_id, question)
+    context.bot_data['redis'].set(f'tg-{chat_id}', question)
 
     update.message.reply_text(
         text=question
@@ -58,7 +58,7 @@ def handle_new_question(update: Update, context: CallbackContext):
 
 def handle_answer(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
-    question = context.bot_data['redis'].get(chat_id).decode('utf-8')
+    question = context.bot_data['redis'].get(f'tg-{chat_id}').decode('utf-8')
     answer = context.bot_data['questions'].get(question)
 
     cleared_answer = answer[:answer.find('.')]
@@ -76,7 +76,7 @@ def handle_answer(update: Update, context: CallbackContext):
 
 def handle_surrender(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
-    question = context.bot_data['redis'].get(chat_id).decode('utf-8')
+    question = context.bot_data['redis'].get(f'tg-{chat_id}').decode('utf-8')
     answer = context.bot_data['questions'].get(question)
 
     update.message.reply_text(
